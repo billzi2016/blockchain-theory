@@ -1,48 +1,51 @@
-# PoS (权益证明) 算法与 Slashing 惩罚区块链实验
+# Proof of Stake (PoS) Consensus & Slashing Lab
 
-基于 Python 实现的 PoS (Proof of Stake, 权益证明) 共识算法与 Slashing (罚没) 惩罚机制实验程序。
+[Chinese Version / 中文文档](./README.zh.md)
 
-PoS 是现代区块链（如以太坊 2.0、Cardano、Solana）广泛采用的共识算法，使用经济质押 (Staking) 替代了 PoW 中的物理电力与算力消耗。
+A Python implementation of Proof of Stake (PoS) consensus algorithm and Slashing penalty mechanism.
+
+PoS is widely adopted by modern blockchains (e.g. Ethereum 2.0, Cardano, Solana), replacing energy-intensive PoW hash calculations with economic staking.
 
 ---
 
-## 核心原理与设计机制
+## Core Concepts & Design
 
-### 1. PoW vs PoS 核心对比
+### 1. PoW vs PoS Comparison
 
-| 维度 | PoW (工作量证明) | PoS (权益证明) |
+| Attribute | PoW (Proof of Work) | PoS (Proof of Stake) |
 | :--- | :--- | :--- |
-| **出块决定因素** | 物理 CPU/GPU/ASIC 哈希算力速度 | 在网络中质押的代币数量 (Stake) |
-| **资源消耗** | 极高（需消耗大量电力） | 极低（仅需正常节点网络通信） |
-| **出块人挑选方式** | 最快碰撞出前导零哈希的节点获得记账权 | 依据节点质押代币占总池比例加权抽签 |
-| **安全基石** | 51% 物理算力攻击成本 | 51% 经济代币收购成本与 Slashing 没收惩罚 |
+| **Block Right Factor** | Physical CPU/GPU/ASIC hash speed | Amount of tokens staked in validator pool |
+| **Resource Consumption** | Very High (Electricity & Hardware) | Very Low (Standard network communication) |
+| **Proposer Selection** | Fastest node to find leading zero hash | Weighted random draw based on stake ratio |
+| **Security Mechanism** | 51% Physical Hashrate Attack Cost | 51% Economic Acquisition Cost & Slashing |
 
-### 2. Nothing at Stake (无利害关系) 问题
+### 2. Nothing at Stake Problem
 
-在传统的 PoS 算法中，当区块链发生分叉时，验证者在两条分叉链上同时打包签名区块不需要像 PoW 那样消耗物理电力。如果验证者在所有分叉链上都下注，无论哪条链最终胜出他都能获得奖励。这种“无利害关系”会导致网络无法对唯一主链达成共识。
+In naive PoS algorithms, signing blocks on multiple fork branches costs zero physical energy. Because validators can vote on all branches without penalty, they are incentivized to support all forks, preventing network consensus.
 
-### 3. Slashing (罚没) 惩罚机制解决方案
+### 3. Slashing Penalty Solution
 
-为了彻底解决 Nothing at Stake 风险，以太坊等现代 PoS 网络引入了 **Slashing 惩罚机制**：
-- **双签检测 (Double Signing)**：如果监测到某个验证者在同一区块高度为两条不同的分叉链都签署了区块；
-- **没收资产 (Slash)**：系统会触发密码学证明，**强制没收该验证者部分或全部质押代币 (Stake)**；
-- **节点踢出**：将其状态标记为已罚没 (`Slashed`)，并从验证者活跃节点池中永久驱逐。
+To eliminate Nothing at Stake risk, modern PoS networks introduce **Slashing**:
+- **Double Signing Detection**: If a validator signs two conflicting blocks at the same block height;
+- **Stake Forfeiture**: Cryptographic proof triggers automatic **confiscation of part or all of their staked tokens**;
+- **Eviction**: Sets validator status to `Slashed` and permanently ejects them from the active validator pool.
 
 ---
 
-## 项目文件结构
+## Directory Structure
 
 ```text
 pos-consensus/
-├── pos_demo.py      # PoS 质押抽签、出块分红与 Slashing 惩罚纯 Python 源码
-└── README.md        # 实验说明文档
+├── pos_demo.py      # Python source for PoS staking & Slashing
+├── README.md        # English documentation
+└── README.zh.md     # Chinese documentation
 ```
 
 ---
 
-## 快速开始
+## Quick Start
 
-环境需求为标准 Python 3：
+Run with standard Python 3:
 
 ```bash
 cd pos-consensus
@@ -51,58 +54,58 @@ python3 pos_demo.py
 
 ---
 
-## 真实运行结果展示
+## Benchmark Execution Log
 
-实测运行 `python3 pos_demo.py` 捕获的完整控制台输出如下：
+Execution output captured from `python3 pos_demo.py`:
 
 ```text
 ==========================================
-区块链 PoS (权益证明) 算法与 Slashing 惩罚实验
+Blockchain PoS & Slashing Lab
 ==========================================
 
-1. 验证者节点质押代币加入权益池:
-   初始总质押量: 1000.0 代币
-   初始各节点权重分布:
-     - Alice: 500.0 代币 (50.0%)
-     - Bob: 300.0 代币 (30.0%)
-     - Charlie: 200.0 代币 (20.0%)
+1. Validators Staking Phase:
+   Initial Active Pool Stake: 1000.0 Tokens
+   Initial Weights:
+     - Alice: 500.0 Tokens (50.0%)
+     - Bob: 300.0 Tokens (30.0%)
+     - Charlie: 200.0 Tokens (20.0%)
 
-2. 运行 1000 轮 PoS 加权抽签出块选举:
+2. Running 1000 Rounds of PoS Selection:
 
-   1000 轮出块后统计结果:
-     - 验证者: Alice    | 质押量: 1450.0 代币 | 出块数:  475 | 累计奖励:  950.0 | 状态: 正常(Active)
-       实际出块占比: 47.50% (理论权重约为: 48.3%)
-     - 验证者: Bob      | 质押量:  906.0 代币 | 出块数:  303 | 累计奖励:  606.0 | 状态: 正常(Active)
-       实际出块占比: 30.30% (理论权重约为: 30.2%)
-     - 验证者: Charlie  | 质押量:  644.0 代币 | 出块数:  222 | 累计奖励:  444.0 | 状态: 正常(Active)
-       实际出块占比: 22.20% (理论权重约为: 21.5%)
+   Results after 1000 rounds:
+     - Validator: Alice    | Stake: 1450.0 Tokens | Blocks:  475 | Rewards:  950.0 | Status: Active
+       Actual Block Ratio: 47.50% (Expected: ~48.3%)
+     - Validator: Bob      | Stake:  906.0 Tokens | Blocks:  303 | Rewards:  606.0 | Status: Active
+       Actual Block Ratio: 30.30% (Expected: ~30.2%)
+     - Validator: Charlie  | Stake:  644.0 Tokens | Blocks:  222 | Rewards:  444.0 | Status: Active
+       Actual Block Ratio: 22.20% (Expected: ~21.5%)
 
-3. 模拟安全攻击测试 (Charlie 尝试在分叉链上进行双签 Double-Signing):
+3. Security Attack Test (Charlie attempts Double-Signing on forks):
 
-   [安全警报 - 触发 Slashing] 验证者 'Charlie' 严重违规！
-   违规原因: 在同一区块高度恶意签署两条不同分叉链 (Double Signing Attack)
-   惩罚决定: 没收全部质押资金 (644.0 代币) 并强制踢出验证者节点池！
+   [SECURITY ALERT - SLASHING TRIGGERED] Validator 'Charlie' severe violation!
+   Reason: Malicious double-signing on conflicting fork chains at same height
+   Action: Forfeited 644.0 staked tokens and permanently evicted from validator pool!
 
-4. 触发 Slashing 后的验证者节点状态:
-   - 验证者: Alice    | 质押量: 1450.0 代币 | 出块数:  475 | 累计奖励:  950.0 | 状态: 正常(Active)
-   - 验证者: Bob      | 质押量:  906.0 代币 | 出块数:  303 | 累计奖励:  606.0 | 状态: 正常(Active)
-   - 验证者: Charlie  | 质押量:    0.0 代币 | 出块数:  222 | 累计奖励:  444.0 | 状态: 正常(Active)
+4. Validator Status After Slashing:
+   - Validator: Alice    | Stake: 1450.0 Tokens | Blocks:  475 | Rewards:  950.0 | Status: Active
+   - Validator: Bob      | Stake:  906.0 Tokens | Blocks:  303 | Rewards:  606.0 | Status: Active
+   - Validator: Charlie  | Stake:    0.0 Tokens | Blocks:  222 | Rewards:  444.0 | Status: Slashed
 
-5. 剔除违规节点后，继续运行 100 轮 PoS 出块:
+5. Running 100 Rounds After Eviction:
 
-   最新验证者列表与终态结算:
-   - 验证者: Alice    | 质押量: 1584.0 代币 | 出块数:  542 | 累计奖励: 1084.0 | 状态: 正常(Active)
-   - 验证者: Bob      | 质押量:  972.0 代币 | 出块数:  336 | 累计奖励:  672.0 | 状态: 正常(Active)
-   - 验证者: Charlie  | 质押量:    0.0 代币 | 出块数:  222 | 累计奖励:  444.0 | 状态: 已罚没(Slashed)
+   Final Validator Settlement:
+   - Validator: Alice    | Stake: 1584.0 Tokens | Blocks:  542 | Rewards: 1084.0 | Status: Active
+   - Validator: Bob      | Stake:  972.0 Tokens | Blocks:  336 | Rewards:  672.0 | Status: Active
+   - Validator: Charlie  | Stake:    0.0 Tokens | Blocks:  222 | Rewards:  444.0 | Status: Slashed
 
 ==========================================
-实验完成：成功验证了 PoS 权益加权出块与 Slashing 防双签惩罚！
+Lab Completed: Verified PoS weighted proposer selection & Slashing defense!
 ==========================================
 ```
 
 ---
 
-## 结论
+## Conclusions
 
-1. **概率契合验证**：1000 轮模拟出块统计显示，Alice (50% 质押)、Bob (30% 质押) 和 Charlie (20% 质押) 的实际出块频率与理论质押比例高度重合。
-2. **经济博弈惩罚**：通过 Slashing 机制直接没收 Charlie 644.0 代币的质押金并将其永久剔除，使其做恶成本远超潜在收益，从而确保去中心化网络的安全。
+1. **Statistical Alignment**: 1000-round simulation confirms block proposal frequencies closely match initial stake ratios (Alice ~50%, Bob ~30%, Charlie ~20%).
+2. **Economic Defense**: Confiscating Charlie's 644.0 tokens and evicting his node ensures attack costs far exceed potential gains.

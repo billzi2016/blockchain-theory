@@ -1,61 +1,64 @@
-# 高性能多线程 SHA256 工作量证明 (PoW) 扫描器
+# High-Performance Multi-Threaded SHA256 PoW Miner
 
-基于 Rust 实现的高性能多线程工作量证明 (Proof-of-Work, PoW) 哈希碰撞程序。
+[Chinese Version / 中文文档](./README.zh.md)
 
-程序以指定字符串（默认 "helloworld"）为前缀，追加递增的 salt 进行 SHA256 哈希计算，动态寻找具有特定前导零（Leading Zeros）难度的哈希解，模拟区块链挖矿算法的核心逻辑。
+A high-performance Proof-of-Work (PoW) hash scanner implemented from scratch in **Rust**.
 
----
-
-## 核心特性
-
-- **极致原生性能**：基于 Rust 编写，调用编译器的最高优化级别 (--release) 与原生 sha2 密码学库，无 GC 开销。
-- **动态 90% CPU 算力占用**：自动检测系统 CPU 逻辑核心数，开启 90% 的物理/逻辑线程进行并发搜寻，最大化利用硬件性能。
-- **无锁分块并发 (Batching)**：各 worker 线程采用 AtomicU64 批量领取 salt 范围，减少线程间原子锁竞争。
-- **单次扫描 & 无限持续挑战**：
-  - 从前导零 1 开始，不断递增挑战更高难度（1个零、2个零 ... N个零）。
-  - 突破历史最高零记录时立刻捕获并刷新显示。
-  - 按 Ctrl + C 可随时安全退出。
-- **数据持久化与实时刷盘 (flush)**：
-  - 数据以 CSV 格式追加保存至 results.csv，每次重启程序保留历史记录。
-  - 写完每条碰撞记录后显式调用 .flush() 强行刷盘，防止数据在缓存中丢失。
-- **全量日志记录**：自动生成 run.log 和 console.log，记录算法运行轨迹与算力统计（H/s）。
+The program prepends a fixed prefix (default `"helloworld"`) and appends an incremental `salt` to compute SHA256 hashes, dynamically searching for hashes meeting specific leading zero targets to simulate core blockchain mining logic.
 
 ---
 
-## 项目文件结构
+## Key Features
+
+- **Zero GC Overhead**: Implemented in Rust with `--release` compiler optimization and native `sha2` cryptography primitives.
+- **Dynamic 90% CPU Utilization**: Automatically detects total CPU logic cores and allocates 90% of available threads to maximize throughput.
+- **Lock-Free Batching**: Worker threads use `AtomicU64` to claim salt ranges in batches, avoiding atomic lock contention.
+- **Infinite Progress Target**:
+  - Starts at leading zero target 1 and continuously advances to higher difficulties (1, 2, 3... N zeros).
+  - Instantly logs and saves whenever historical leading zero records are broken.
+  - Gracefully stops upon `Ctrl + C`.
+- **Data Persistence & Immediate Flushing (`flush`)**:
+  - Appends results into `results.csv` and retains history across runs.
+  - Explicitly calls `.flush()` after every output to ensure real-time disk persistence.
+- **Comprehensive Logging**: Generates `run.log` and `console.log` with real-time throughput metrics (H/s).
+
+---
+
+## Directory Structure
 
 ```text
 hash/
-├── Cargo.toml       # Rust 项目配置文件与依赖 (sha2, hex, chrono, ctrlc)
-├── run.sh           # 一键编译与启动脚本
-├── README.md        # 项目说明文档
-├── results.csv      # 哈希碰撞结果导出数据 (追加保存)
+├── Cargo.toml       # Project configuration (sha2, hex, chrono, ctrlc)
+├── run.sh           # One-click Release build and execution script
+├── README.md        # English documentation
+├── README.zh.md     # Chinese documentation
+├── results.csv      # Persistent benchmark output dataset
 └── src/
-    └── main.rs      # 多线程挖矿与日志处理核心源码
+    └── main.rs      # Core multi-threaded miner source code
 ```
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 1. 前置条件
+### Prerequisites
 
-确保系统已安装 Rust 与 Cargo 工具链。如果尚未安装，可执行：
+Ensure Rust and Cargo are installed:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-### 2. 一键运行
+### Execution
 
-项目内置了便捷的 run.sh 脚本，会自动以 Release 优化模式进行编译并运行：
+Run via the built-in script:
 
 ```bash
 cd hash
 ./run.sh
 ```
 
-或使用标准 Cargo 命令运行：
+Or execute directly with Cargo:
 
 ```bash
 cargo run --release
@@ -63,9 +66,9 @@ cargo run --release
 
 ---
 
-## 真实运行数据案例与分析 (results.csv)
+## Benchmark Case Study & Analysis (`results.csv`)
 
-实测单次完整运行捕获的真实数据如下表所示：
+Captured output from a single continuous execution run:
 
 | timestamp | target_zeros | salt | hash | elapsed_ms | hashes_tested |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -79,36 +82,33 @@ cargo run --release
 
 ---
 
-## 核心实验现象解读
+## Key Experimental Observations
 
-通过对上述实测 CSV 数据的分析，验证了工作量证明 (PoW) 的两个关键特性：
+Analysis of the `results.csv` benchmark data validates two fundamental PoW characteristics:
 
-### 1. Salt 越来越长与耗时指数级增加 (越来越慢)
+### 1. Exponential Difficulty Scaling & Search Space Growth
 
-每增加一个前导零，在十六进制下解的空间难度增加 16 倍 (16^N)：
-- **前导零 1 ~ 4**：试错次数少（在数万次内），耗时不足 1 毫秒。
-- **前导零 6**：salt 增长至 8 位数 (`36737279`)，尝试约 3600 万次，耗时增加至 622 毫秒。
-- **前导零 7**：salt 增长至 9 位数 (`651494081`)，尝试约 6.5 亿次，耗时跳跃升至 10.9 秒。
-- **前导零 8**：salt 增长至 10 位数 (`7374298388`)，尝试次数达到 **73.7 亿次**，耗时飙升至 **144 秒 (约 2.4 分钟)**。
+Each additional leading zero increases the target difficulty by a factor of 16 ($16^N$):
+- **Leading Zeros 1 - 4**: Discovered within milliseconds (under tens of thousands of attempts).
+- **Leading Zeros 6**: Salt expanded to 8 digits (`36737279`), taking 622 ms over 36 million hashes.
+- **Leading Zeros 7**: Salt expanded to 9 digits (`651494081`), taking 10.9 seconds over 650 million hashes.
+- **Leading Zeros 8**: Salt expanded to 10 digits (`7374298388`), taking **144 seconds (~2.4 minutes)** over **7.37 billion hashes**.
 
-随着难度提升，需要测试的 salt 数值范围成倍扩大（字符位数越来越长），因此碰撞计算所消耗的时间呈现明显的**指数级暴涨趋势（越来越慢）**。
+### 2. Difficulty Skip Phenomenon (e.g. Target Zero 3 Skipped)
 
-### 2. 难度跳级现象 (例如前导零 3 被跳过)
-
-在上述真实记录的第 2 行到第 4 行中：
-- 在寻找到前导零为 2 的解后，下一个记录直接是 **前导零 4** (`target_zeros = 4`)，**中间的前导零 3 被直接跳过**。
-- **原理解释**：在多线程并发搜寻过程中，某个 worker 线程运气极好，在较早的 salt 区间（`salt = 50437`）直接碰出了拥有 4 个前导零的哈希 (`000034b083...`)。系统识别到该结果满足且超越了当时的目标（3 个零），因此立刻记录了这个更高的“暴击解”，并将全局目标直接更新提升为 5 个零，从而直接跳过了对前导零 3 的单独寻找。
+Between lines 2 and 4 of the dataset:
+- Right after target zero 2, the next logged result is **target zero 4** (`target_zeros = 4`), skipping zero 3 entirely.
+- **Explanation**: A worker thread hit a lucky hash with 4 leading zeros (`000034b083...`) early in its assigned salt range (`salt = 50437`). Because 4 exceeded the current target 3, the system immediately logged this higher-difficulty hit and updated the global target to 5, bypassing the intermediate target 3.
 
 ---
 
-## 区块链与矿池原理延伸
+## Mining Pool Theory Connection
 
-本项目内部的工作机制完美映射了区块链 PoW 挖矿与矿池 (Mining Pool) 的分布式架构：
+The internal task distribution mechanism maps to distributed Bitcoin Mining Pools:
 
-1. **单机多线程 vs 矿池网络**：
-   - 本项目的主线程将 salt 分块分发给 90% 的 CPU worker 线程，类似于矿池服务器将 nonce 分配给全网不同的矿机。
-2. **前导零难度 (Difficulty)**：
-   - 前导零个数越多，碰撞出合适 Hash 的概率呈指数级下降 (16^N)，这也是比特币调节全网出块难度的数学基石。
-3. **Share 贡献机制**：
-   - 矿池内部通过较低难度的预警解（如要求 5 个零）来衡量各矿工的实际算力贡献，而在全网成功爆块（如要求 15 个零）时按比例平分区块奖励。
-
+1. **Local Threads vs Pool Network**:
+   - Main thread assigns salt ranges to 90% CPU worker threads, mirroring how a Mining Pool server delegates nonce ranges to thousands of mining rigs.
+2. **Difficulty Targets**:
+   - Demonstrates how exponential hash difficulty regulates global block time.
+3. **Shares Mechanism**:
+   - Illustrates how lower-difficulty intermediate hits (Shares) allow pools to measure miner hash contributions and distribute rewards fairly.
