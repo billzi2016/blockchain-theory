@@ -4,7 +4,7 @@
 
 ---
 
-## 4 大核心模块索引
+## 5 大核心模块索引
 
 | 模块名称 | 技术栈 | 解决的关键理论问题 | 源码及文档目录 |
 | :--- | :--- | :--- | :--- |
@@ -12,6 +12,7 @@
 | **2. 默克尔树 (Merkle Tree)** | Python | 交易数据高效汇总压缩与 SPV 轻节点 O(log N) 快速验证 | [`merkle-tree/`](./merkle-tree/) |
 | **3. ECDSA 数字签名** | Python (Secp256k1) | 非对称加密与椭圆曲线数字签名，确立资产绝对所有权 | [`ecdsa-signature/`](./ecdsa-signature/) |
 | **4. UTXO 账本模型** | Python | 离散交易输出流转、找零机制与防双花 (Double-Spend) 拦截 | [`utxo-model/`](./utxo-model/) |
+| **5. PoS 权益证明与 Slashing** | Python | 质押加权抽签出块、权益共识演进与防双签惩罚机制 | [`pos-consensus/`](./pos-consensus/) |
 
 ---
 
@@ -33,8 +34,11 @@ blockchain-theory/
 ├── ecdsa-signature/        # 模块 3: Secp256k1 椭圆曲线数字签名
 │   ├── ecdsa_demo.py
 │   └── README.md
-└── utxo-model/             # 模块 4: UTXO 账本与双花防护模型
-    ├── utxo_demo.py
+├── utxo-model/             # 模块 4: UTXO 账本与双花防护模型
+│   ├── utxo_demo.py
+│   └── README.md
+└── pos-consensus/          # 模块 5: PoS 权益证明与 Slashing 机制
+    ├── pos_demo.py
     └── README.md
 ```
 
@@ -68,4 +72,11 @@ python3 ecdsa_demo.py
 ```bash
 cd utxo-model
 python3 utxo_demo.py
+```
+
+### 5. PoS 权益证明模块 (Python)
+
+```bash
+cd pos-consensus
+python3 pos_demo.py
 ```
