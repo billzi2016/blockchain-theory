@@ -1,0 +1,10 @@
+# Rust 编译产物
+/hash/target/
+target/
+
+# 运行产生的日志与临时控制台输出
+*.log
+*.csv
+!hash/results.csv
+hash/run.log
+hash/console.log
